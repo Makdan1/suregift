@@ -7,9 +7,9 @@ A premium, production-grade mobile application for purchasing and managing gift 
 
 ## 📱 Screenshots
 
-<p align="center">
-  ![App Walkthrough](assets/screenshots/app_walkthrough.gif)
-</p>
+<div align="center">
+  <img src="assets/screenshots/app_walkthrough.gif" width="400" />
+</div>
 
 <p align="center">
   <img src="assets/screenshots/screenshot1.png" width="200" />
