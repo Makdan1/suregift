@@ -8,9 +8,8 @@ import '../data/product_models.dart';
 import 'product_details_screen.dart';
 import '../../cart/presentation/cart_screen.dart';
 import '../../cart/presentation/cart_providers.dart';
-import '../../auth/presentation/login_screen.dart';
-import '../../auth/data/auth_repository.dart';
 import '../../../core/widgets/common_widgets.dart';
+import '../../../core/utils/currency_formatter.dart';
 
 final searchQueryProvider = StateProvider<String>((ref) => '');
 
@@ -23,7 +22,8 @@ final productsProvider = FutureProvider<List<SuregiftsProductResponse>>((ref) as
   return products.where((p) => 
     (p.name?.toLowerCase().contains(query) ?? false) ||
     (p.description?.toLowerCase().contains(query) ?? false) ||
-    (p.categories?.any((c) => c.toLowerCase().contains(query)) ?? false)
+    (p.categories?.any((c) => c.toLowerCase().contains(query)) ?? false) ||
+    (p.countries?.any((c) => c.toLowerCase().contains(query)) ?? false)
   ).toList();
 });
 
@@ -37,18 +37,6 @@ class ProductsScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Gift Cards'),
-        leading: IconButton(
-          icon: const Icon(Icons.logout),
-          onPressed: () async {
-            await ref.read(authRepositoryProvider).logout();
-            if (context.mounted) {
-              Navigator.of(context).pushAndRemoveUntil(
-                MaterialPageRoute(builder: (_) => const LoginScreen()),
-                (route) => false,
-              );
-            }
-          },
-        ),
         actions: [
           Consumer(
             builder: (context, ref, child) {
@@ -86,7 +74,9 @@ class ProductsScreen extends ConsumerWidget {
                 hintText: 'Search gift cards...',
                 prefixIcon: const Icon(Icons.search),
                 filled: true,
-                fillColor: Colors.grey[100],
+                fillColor: Theme.of(context).brightness == Brightness.dark 
+                    ? const Color(0xFF25262B) 
+                    : Colors.grey[100],
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                   borderSide: BorderSide.none,
@@ -110,7 +100,7 @@ class ProductsScreen extends ConsumerWidget {
                       crossAxisCount: 2,
                       crossAxisSpacing: 16,
                       mainAxisSpacing: 16,
-                      childAspectRatio: 0.65,
+                      childAspectRatio: 0.62,
                     ),
                     itemCount: products.length,
                     itemBuilder: (context, index) {
@@ -187,9 +177,16 @@ class ProductCard extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
+                  const SizedBox(height: 2),
+                  Text(
+                    product.countries?.join(', ') ?? 'Global',
+                    style: const TextStyle(fontSize: 11, color: Colors.grey),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                   const SizedBox(height: 4),
                   Text(
-                    '${product.currency ?? 'NGN'} ${product.minValue?.toInt() ?? 0}',
+                    CurrencyFormatter.format(product.minValue, currency: product.currency),
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: Theme.of(context).primaryColor,
                           fontWeight: FontWeight.bold,

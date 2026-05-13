@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../constants/app_constants.dart';
+import '../navigation/navigation_service.dart';
 
 final dioProvider = Provider<Dio>((ref) {
   final dio = Dio(
@@ -16,6 +17,7 @@ final dioProvider = Provider<Dio>((ref) {
     ),
   );
 
+  // Auth & Error Handling Interceptor
   dio.interceptors.add(
     InterceptorsWrapper(
       onRequest: (options, handler) async {
@@ -26,15 +28,29 @@ final dioProvider = Provider<Dio>((ref) {
         }
         return handler.next(options);
       },
-      onError: (e, handler) {
+      onError: (e, handler) async {
         if (e.response?.statusCode == 401) {
-          // Handle unauthorized error (e.g., logout user or refresh token)
-          // For this assessment, we should probably redirect to login
+          const storage = FlutterSecureStorage();
+          await storage.delete(key: AppConstants.tokenKey);
+          
+          final navKey = ref.read(navigatorKeyProvider);
+          if (navKey.currentState != null) {
+            navKey.currentState!.pushNamedAndRemoveUntil('/login', (route) => false);
+          }
         }
         return handler.next(e);
       },
     ),
   );
+
+  // Pretty Logging Interceptor
+  dio.interceptors.add(LogInterceptor(
+    requestHeader: true,
+    requestBody: true,
+    responseHeader: false,
+    responseBody: true,
+    error: true,
+  ));
 
   return dio;
 });

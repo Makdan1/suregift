@@ -34,6 +34,18 @@ class SuregiftsProductResponse {
     this.validity,
   });
 
+  /// Business Logic: Returns a filtered, unique, and sorted list of valid amounts (>= 1.0)
+  List<double> get validAmounts {
+    final List<double> raw = denominations ?? [];
+    if (raw.isEmpty) {
+      if (minValue != null) raw.add(minValue!);
+      if (maxValue != null) raw.add(maxValue!);
+    }
+    final sorted = raw.toSet().where((a) => a >= 1.0).toList();
+    sorted.sort();
+    return sorted;
+  }
+
   factory SuregiftsProductResponse.fromJson(Map<String, dynamic> json) =>
       _$SuregiftsProductResponseFromJson(json);
   Map<String, dynamic> toJson() => _$SuregiftsProductResponseToJson(this);

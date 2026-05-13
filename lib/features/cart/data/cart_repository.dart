@@ -74,9 +74,22 @@ class CartRepository {
 
   Future<void> clearCart() async {
     try {
-      await _dio.delete(AppConstants.cartUrl);
+      // Try bulk delete items first
+      await _dio.delete(AppConstants.cartItemsUrl);
     } catch (e) {
-      rethrow;
+      // Fallback: If bulk delete is not supported (405), delete items one by one
+      if (e is DioException && e.response?.statusCode == 405) {
+        final cart = await getCart();
+        if (cart.items != null) {
+          for (final item in cart.items!) {
+            if (item.id != null) {
+              await removeFromCart(item.id!);
+            }
+          }
+        }
+      } else {
+        rethrow;
+      }
     }
   }
 }

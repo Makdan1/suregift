@@ -9,6 +9,10 @@ final voucherRepositoryProvider = Provider<VoucherRepository>((ref) {
   return VoucherRepository(ref.watch(dioProvider));
 });
 
+final vouchersProvider = FutureProvider<List<VoucherHistoryResponse>>((ref) {
+  return ref.watch(voucherRepositoryProvider).getVouchers();
+});
+
 class VoucherRepository {
   final Dio _dio;
 
@@ -25,7 +29,7 @@ class VoucherRepository {
     }
   }
 
-  Future<VoucherHistoryResponse> getVoucherDetails(int id) async {
+  Future<VoucherHistoryResponse> getVoucherById(int id) async {
     try {
       final response = await _dio.get('${AppConstants.vouchersUrl}/$id');
       return VoucherHistoryResponse.fromJson(response.data);

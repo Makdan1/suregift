@@ -13,12 +13,9 @@ class ProductRepository {
 
   ProductRepository(this._dio);
 
-  Future<List<SuregiftsProductResponse>> getProducts({int limit = 100, int skip = 0}) async {
+  Future<List<SuregiftsProductResponse>> getProducts() async {
     try {
-      final response = await _dio.get(
-        AppConstants.productsUrl,
-        queryParameters: {'limit': limit, 'skip': skip},
-      );
+      final response = await _dio.get(AppConstants.productsUrl);
       return (response.data as List)
           .map((e) => SuregiftsProductResponse.fromJson(e))
           .toList();
@@ -27,9 +24,9 @@ class ProductRepository {
     }
   }
 
-  Future<SuregiftsProductResponse> getProductDetails(String productCode) async {
+  Future<SuregiftsProductResponse> getProductById(String productId) async {
     try {
-      final response = await _dio.get('${AppConstants.productsUrl}/$productCode');
+      final response = await _dio.get('${AppConstants.productsUrl}/$productId');
       return SuregiftsProductResponse.fromJson(response.data);
     } catch (e) {
       rethrow;

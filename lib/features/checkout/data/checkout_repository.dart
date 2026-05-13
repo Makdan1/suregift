@@ -13,6 +13,15 @@ class CheckoutRepository {
 
   CheckoutRepository(this._dio);
 
+  Future<double> calculateTotal() async {
+    try {
+      final response = await _dio.post(AppConstants.calculateTotalUrl);
+      return response.data['total']?.toDouble() ?? 0.0;
+    } catch (e) {
+      rethrow;
+    }
+  }
+
   Future<CheckoutResponse> checkout() async {
     try {
       final response = await _dio.post(AppConstants.checkoutUrl);
@@ -21,4 +30,8 @@ class CheckoutRepository {
       rethrow;
     }
   }
+}
+class CheckoutTotalResponse {
+  final double total;
+  CheckoutTotalResponse(this.total);
 }

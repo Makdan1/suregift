@@ -1,9 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import '../data/voucher_models.dart';
 import '../data/voucher_repository.dart';
 import '../data/voucher_operation_models.dart';
+import '../../../core/utils/currency_formatter.dart';
+import '../../../core/widgets/common_widgets.dart';
+
+final voucherOperationsProvider = FutureProvider.family<List<VoucherOperationResponse>, int>((ref, id) {
+  return ref.watch(voucherRepositoryProvider).getVoucherOperations(id);
+});
 
 class VoucherDetailsScreen extends ConsumerWidget {
   final VoucherHistoryResponse voucher;
@@ -12,28 +19,32 @@ class VoucherDetailsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final operationsAsync = ref.watch(voucherOperationsProvider(voucher.id!));
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
-      appBar: AppBar(title: const Text('Voucher Details')),
+      appBar: AppBar(
+        title: const Text('Voucher Details'),
+      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Header Info
             Center(
               child: Column(
                 children: [
-                  const Icon(Icons.confirmation_num, size: 80, color: Colors.blueAccent),
-                  const SizedBox(height: 16),
                   Text(
-                    voucher.productName ?? '',
-                    style: Theme.of(context).textTheme.displayLarge?.copyWith(fontSize: 24),
+                    voucher.productName ?? 'Voucher',
+                    style: Theme.of(context).textTheme.displayLarge?.copyWith(fontSize: 20),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    '${voucher.currency} ${voucher.amount}',
+                    CurrencyFormatter.format(voucher.amount, currency: voucher.currency),
                     style: TextStyle(
-                      fontSize: 20,
+                      fontSize: 24,
                       fontWeight: FontWeight.bold,
                       color: Theme.of(context).primaryColor,
                     ),
@@ -41,142 +52,201 @@ class VoucherDetailsScreen extends ConsumerWidget {
                 ],
               ),
             ),
-            const SizedBox(height: 48),
-            _buildDetailItem(
-              context,
-              'Voucher Code',
-              voucher.voucherCode ?? 'Processing...',
-              canCopy: voucher.voucherCode != null,
-            ),
-            if (voucher.pin != null)
-              _buildDetailItem(
-                context,
-                'PIN',
-                voucher.pin!,
-                canCopy: true,
+            const SizedBox(height: 32),
+
+            // Voucher Card
+            Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: Theme.of(context).cardColor,
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(isDark ? 0.2 : 0.05),
+                    blurRadius: 20,
+                    offset: const Offset(0, 10),
+                  ),
+                ],
               ),
-            if (voucher.serialNumber != null)
-              _buildDetailItem(
-                context,
-                'Serial Number',
-                voucher.serialNumber!,
-                canCopy: true,
-              ),
-            _buildDetailItem(
-              context,
-              'Expiry Date',
-              voucher.expiryDate?.split('T')[0] ?? 'No expiry',
-            ),
-            _buildDetailItem(
-              context,
-              'Purchase Date',
-              voucher.createdAtUtc?.split('T')[0] ?? '',
-            ),
-            const SizedBox(height: 24),
-            const Text(
-              'Operational History',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 12),
-            _VoucherOperationsList(voucherId: voucher.id!),
-            const SizedBox(height: 40),
-            const Card(
-              color: Color(0xFFFFF3E0),
-              child: Padding(
-                padding: EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Icon(Icons.info_outline, color: Colors.orange),
-                        SizedBox(width: 8),
-                        Text(
-                          'How to Redeem',
-                          style: TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 12),
-                    Text(
-                      '1. Visit the store or website.\n2. Present this code at checkout.\n3. Your discount will be applied immediately.',
+              child: Column(
+                children: [
+                  _InfoRow(
+                    label: 'Voucher Code',
+                    value: voucher.voucherCode ?? 'N/A',
+                    isCode: true,
+                  ),
+                  if (voucher.pin != null) ...[
+                    const Divider(height: 32),
+                    _InfoRow(
+                      label: 'PIN',
+                      value: voucher.pin!,
+                      isCode: true,
                     ),
                   ],
-                ),
+                  if (voucher.serialNumber != null) ...[
+                    const Divider(height: 32),
+                    _InfoRow(
+                      label: 'Serial Number',
+                      value: voucher.serialNumber!,
+                    ),
+                  ],
+                  const Divider(height: 32),
+                  _InfoRow(
+                    label: 'Expiry Date',
+                    value: voucher.expiryDate?.split('T')[0] ?? 'No Expiry',
+                    valueColor: Colors.orange,
+                  ),
+                ],
               ),
             ),
+            const SizedBox(height: 40),
+
+            // Instructions
+            Text(
+              'Instructions & Terms',
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(fontSize: 18),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              '• Present this code at the merchant location or use it online.\n'
+              '• Ensure the PIN is kept confidential.\n'
+              '• Vouchers are subject to merchant terms and conditions.',
+              style: TextStyle(height: 1.6, color: isDark ? Colors.grey[400] : Colors.grey[600]),
+            ),
+            const SizedBox(height: 40),
+
+            // Operations History
+            Text(
+              'Operational History',
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(fontSize: 18),
+            ),
+            const SizedBox(height: 16),
+            operationsAsync.when(
+              data: (ops) {
+                if (ops.isEmpty) return const Text('No history available', style: TextStyle(color: Colors.grey));
+                return Column(
+                  children: ops.map((op) => _OperationItem(operation: op)).toList(),
+                );
+              },
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (err, stack) {
+                if (err.toString().contains('404')) {
+                  return const Text('No history available', style: TextStyle(color: Colors.grey));
+                }
+                return NiceErrorWidget(
+                  message: err.toString(),
+                  onRetry: () => ref.refresh(voucherOperationsProvider(voucher.id!)),
+                );
+              },
+            ),
+            const SizedBox(height: 60),
           ],
         ),
       ),
     );
   }
+}
 
-  Widget _buildDetailItem(BuildContext context, String label, String value, {bool canCopy = false}) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            label,
-            style: const TextStyle(fontSize: 14, color: Colors.grey),
-          ),
-          const SizedBox(height: 8),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                child: Text(
-                  value,
-                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
+class _InfoRow extends StatelessWidget {
+  final String label;
+  final String value;
+  final bool isCode;
+  final Color? valueColor;
+
+  const _InfoRow({
+    required this.label,
+    required this.value,
+    this.isCode = false,
+    this.valueColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(label, style: const TextStyle(fontSize: 12, color: Colors.grey)),
+            const SizedBox(height: 4),
+            Text(
+              value,
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                letterSpacing: isCode ? 1.5 : 0,
+                color: valueColor,
               ),
-              if (canCopy)
-                IconButton(
-                  icon: const Icon(Icons.copy, size: 20),
-                  onPressed: () {
-                    Clipboard.setData(ClipboardData(text: value));
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Copied to clipboard')),
-                    );
-                  },
-                ),
-            ],
+            ),
+          ],
+        ),
+        if (isCode)
+          IconButton(
+            icon: const Icon(Icons.copy_rounded, size: 20),
+            onPressed: () {
+              Clipboard.setData(ClipboardData(text: value));
+              TopSnackbar.show(context, '$label copied to clipboard', isError: false);
+            },
           ),
-          const Divider(),
-        ],
-      ),
+      ],
     );
   }
 }
 
-final voucherOperationsProvider = FutureProvider.family<List<VoucherOperationResponse>, int>((ref, id) async {
-  return ref.watch(voucherRepositoryProvider).getVoucherOperations(id);
-});
+class _OperationItem extends StatelessWidget {
+  final VoucherOperationResponse operation;
 
-class _VoucherOperationsList extends ConsumerWidget {
-  final int voucherId;
-
-  const _VoucherOperationsList({required this.voucherId});
+  const _OperationItem({required this.operation});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final opsAsync = ref.watch(voucherOperationsProvider(voucherId));
-
-    return opsAsync.when(
-      data: (ops) => Column(
-        children: ops.isEmpty 
-            ? [const Text('No history found')] 
-            : ops.map((op) => ListTile(
-                contentPadding: EdgeInsets.zero,
-                title: Text(op.status ?? ''),
-                subtitle: Text(op.message ?? ''),
-                trailing: Text(op.createdAtUtc?.split('T')[0] ?? ''),
-                leading: const Icon(Icons.history_edu, size: 20),
-              )).toList(),
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Row(
+        children: [
+          Container(
+            width: 8,
+            height: 8,
+            decoration: BoxDecoration(
+              color: _getStatusColor(operation.status),
+              shape: BoxShape.circle,
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  operation.status ?? 'Status',
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+                Text(
+                  operation.message ?? '',
+                  style: const TextStyle(fontSize: 12, color: Colors.grey),
+                ),
+              ],
+            ),
+          ),
+          Text(
+            operation.createdAtUtc?.split('T')[0] ?? '',
+            style: const TextStyle(fontSize: 12, color: Colors.grey),
+          ),
+        ],
       ),
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (err, stack) => const Text('Could not load history'),
     );
+  }
+
+  Color _getStatusColor(String? status) {
+    switch (status?.toLowerCase()) {
+      case 'purchased':
+      case 'delivered':
+        return Colors.green;
+      case 'failed':
+        return Colors.red;
+      default:
+        return Colors.blue;
+    }
   }
 }

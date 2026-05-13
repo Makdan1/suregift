@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../products/presentation/products_screen.dart';
-import '../../vouchers/presentation/vouchers_screen.dart';
-
-final mainTabIndexProvider = StateProvider<int>((ref) => 0);
+import 'history_screen.dart';
+import 'profile_screen.dart';
+import 'main_providers.dart';
 
 class MainScreen extends ConsumerWidget {
   const MainScreen({super.key});
@@ -17,7 +17,8 @@ class MainScreen extends ConsumerWidget {
         index: selectedIndex,
         children: const [
           ProductsScreen(),
-          VouchersScreen(),
+          HistoryScreen(),
+          ProfileScreen(),
         ],
       ),
       bottomNavigationBar: BottomNavigationBar(
@@ -33,6 +34,11 @@ class MainScreen extends ConsumerWidget {
             icon: Icon(Icons.history_outlined),
             activeIcon: Icon(Icons.history),
             label: 'History',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person_outline),
+            activeIcon: Icon(Icons.person),
+            label: 'Profile',
           ),
         ],
       ),
