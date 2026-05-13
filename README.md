@@ -16,13 +16,16 @@ A premium, production-grade mobile application for purchasing and managing gift 
   <img src="assets/screenshots/screenshot.png" width="200" />
   <img src="assets/screenshots/screenshot2.png" width="200" />
   <img src="assets/screenshots/screenshot3.png" width="200" />
-  <img src="assets/screenshots/screenshot10.png" width="200" />
 </p>
 
 <p align="center">
+  <img src="assets/screenshots/screenshot10.png" width="200" />
   <img src="assets/screenshots/screenshot5.png" width="200" />
   <img src="assets/screenshots/screenshot6.png" width="200" />
   <img src="assets/screenshots/screenshot7.png" width="200" />
+</p>
+
+<p align="center">
   <img src="assets/screenshots/screenshot8.png" width="200" />
   <img src="assets/screenshots/screenshot9.png" width="200" />
 </p>
