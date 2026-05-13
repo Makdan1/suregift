@@ -8,7 +8,7 @@ A premium, production-grade mobile application for purchasing and managing gift 
 ## 📱 Screenshots
 
 <div align="center">
-  <img src="assets/screenshots/app_walkthrough.gif" width="400" />
+  <img src="https://raw.githubusercontent.com/Makdan1/suregift/main/assets/screenshots/app_walkthrough.gif" width="400" />
 </div>
 
 <p align="center">
